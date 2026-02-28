@@ -6,12 +6,16 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct AppMusicaApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack {
+                LoginView()
+            }
+            .modelContainer(for: [UserAccount.self], inMemory: true)
         }
     }
 }
