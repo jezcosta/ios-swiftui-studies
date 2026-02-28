@@ -3,7 +3,8 @@ import SwiftData
 
 struct LoginView: View {
     @Environment(\.modelContext) private var modelContext
-
+    @EnvironmentObject private var appState: AppState
+    
     @Query private var accounts: [UserAccount]
 
     @State private var user: String = ""
@@ -12,8 +13,6 @@ struct LoginView: View {
 
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
-
-    @State private var loggedInAccount: UserAccount? = nil
 
     var body: some View {
         NavigationStack {
@@ -96,9 +95,6 @@ struct LoginView: View {
                 .padding(.horizontal, 34)
                 .padding(.top, 24)
             }
-            .navigationDestination(item: $loggedInAccount) { account in
-                HomeView()
-            }
             .alert("Login", isPresented: $showAlert) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -129,7 +125,9 @@ struct LoginView: View {
             return
         }
 
-        loggedInAccount = found
+        withAnimation(.snappy) {
+            appState.route = .home
+        }
     }
 }
 

@@ -10,12 +10,12 @@ import SwiftData
 
 @main
 struct AppMusicaApp: App {
+    @StateObject private var appState = AppState()
+
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                LoginView()
-            }
-            .modelContainer(for: [UserAccount.self], inMemory: true)
-        }
+            RootView()
+                .environmentObject(appState)
+        }.modelContainer(for: [UserAccount.self], inMemory: true)
     }
 }
