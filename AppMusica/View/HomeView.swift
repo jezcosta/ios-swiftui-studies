@@ -9,29 +9,30 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject private var appState: AppState
+    @State private var selectedTab = 0
     
     var body: some View {
-        ZStack {
-            Text("Home")
-            TabView {
-                MusicListView()
-                    .tabItem {
-                        Label("Músicas", systemImage: "list.dash")
-                    }
-
-                FavoritesView()
-                    .tabItem {
-                        Label("Favoritos", systemImage: "heart")
-                    }
-                
+        TabView(selection: $selectedTab) {
             
-                ProfileView()
-                    .tabItem {
-                        Label("Perfil", systemImage: "person")
-                    }
+            MusicListView()
+                .tabItem {
+                    Label("Músicas", systemImage: "list.dash")
                 }
+                .tag(0)
+
+            FavoritesView()
+                .tabItem {
+                    Label("Favoritos", systemImage: "heart")
+                }
+                .tag(1)
+
+            ProfileView()
+                .tabItem {
+                    Label("Perfil", systemImage: "person")
+                }
+                .tag(2)
         }
-        .navigationTitle("Home")
+        .navigationTitle(titleForTab())
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -39,6 +40,19 @@ struct HomeView: View {
                     logout()
                 }
             }
+        }
+    }
+    
+    private func titleForTab() -> String {
+        switch selectedTab {
+        case 0:
+            return "Músicas"
+        case 1:
+            return "Favoritos"
+        case 2:
+            return "Perfil"
+        default:
+            return "Home"
         }
     }
     
