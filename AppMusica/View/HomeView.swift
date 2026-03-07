@@ -9,7 +9,6 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject private var appState: AppState
-    @StateObject private var keyboard = KeyboardObserver()
     @State private var selectedTab = 0
     
     var body: some View {
