@@ -11,6 +11,7 @@ struct MusicListView: View {
     @EnvironmentObject private var appState: AppState
     @State private var musics = [Music]()
     @State private var isLoading = false
+    @State var searchText: String = ""
     
     var body: some View {
         ZStack {
@@ -52,7 +53,9 @@ struct MusicListView: View {
                     .padding(.vertical, 4)
                 }
             }
-            
+        }
+        .safeAreaInset(edge: .bottom) {
+            BottomSearchBar(searchText: $searchText)
         }
         .task {
             await loadData()
