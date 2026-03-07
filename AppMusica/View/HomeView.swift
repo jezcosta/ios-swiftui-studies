@@ -13,6 +13,23 @@ struct HomeView: View {
     var body: some View {
         ZStack {
             Text("Home")
+            TabView {
+                MusicListView()
+                    .tabItem {
+                        Label("Músicas", systemImage: "list.dash")
+                    }
+
+                FavoritesView()
+                    .tabItem {
+                        Label("Favoritos", systemImage: "heart")
+                    }
+                
+            
+                ProfileView()
+                    .tabItem {
+                        Label("Perfil", systemImage: "person")
+                    }
+                }
         }
         .navigationTitle("Home")
         .navigationBarTitleDisplayMode(.inline)
