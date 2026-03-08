@@ -9,76 +9,121 @@ import SwiftUI
 
 struct MusicListView: View {
     @EnvironmentObject private var appState: AppState
-    @State private var musics = [Music]()
+    
+    @State private var musics: [Music] = []
     @State private var isLoading = false
-    @State var searchText: String = ""
+    @State private var searchText: String = ""
+    @State private var hasSearched = false
     
     var body: some View {
         ZStack {
+            contentView
+        }
+        .overlay {
             if isLoading {
-                VStack(spacing: 16) {
-                    ProgressView()
-                        .scaleEffect(1.4)
+                ZStack {
+                    Color.black.opacity(0.05)
+                        .ignoresSafeArea()
                     
-                    Text("Carregando músicas...")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                List(musics, id: \.trackId) { item in
-                    HStack {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.4)
                         
-                        Image(systemName: "music.note")
-                            .font(.title3)
-                            .foregroundStyle(.blue)
-                        
-                        VStack(alignment: .leading) {
-                            Text(item.trackName)
-                                .font(.headline)
-                            
-                            Text(item.collectionName)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        Button {
-                        } label: {
-                            Image(systemName: "heart")
-                                .foregroundStyle(.red)
-                        }
-                        .buttonStyle(.plain)
+                        Text("Buscando músicas...")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 4)
+                    .padding(24)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
             }
         }
         .safeAreaInset(edge: .bottom) {
             BottomSearchBar(searchText: $searchText)
+                .background(.clear)
         }
-        .task {
-            await loadData()
+        .task(id: searchText) {
+            let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            guard !trimmed.isEmpty else {
+                musics = []
+                hasSearched = false
+                isLoading = false
+                return
+            }
+            
+            do {
+                try await Task.sleep(for: .milliseconds(500))
+                await loadData(query: trimmed)
+            } catch {
+            }
         }
     }
     
-    func loadData() async {
+    @ViewBuilder
+    private var contentView: some View {
+        if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !hasSearched {
+            ContentUnavailableView(
+                "Faça sua busca",
+                systemImage: "magnifyingglass",
+                description: Text("Pesquise por um artista, música ou álbum para ver os resultados.")
+            )
+        } else if hasSearched && musics.isEmpty && !isLoading {
+            ContentUnavailableView(
+                "Nenhum resultado encontrado",
+                systemImage: "music.note.list",
+                description: Text("Tente pesquisar outro artista ou música.")
+            )
+        } else {
+            List(musics, id: \.trackId) { item in
+                HStack {
+                    Image(systemName: "music.note")
+                        .font(.title3)
+                        .foregroundStyle(.blue)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.trackName)
+                            .font(.headline)
+                        
+                        Text(item.collectionName)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Button {
+                    } label: {
+                        Image(systemName: "heart")
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.vertical, 4)
+            }
+            .listStyle(.plain)
+        }
+    }
+    
+    func loadData(query: String) async {
         isLoading = true
+        hasSearched = true
         
-        guard let url = URL(string: "https://itunes.apple.com/search?term=taylor+swift&entity=song") else {
-            print("Invalid URL")
+        let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+        
+        guard let url = URL(string: "https://itunes.apple.com/search?term=\(encodedQuery)&entity=song") else {
             isLoading = false
             return
         }
         
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
-            
-            if let decodeResponse = try? JSONDecoder().decode(MusicResponse.self, from: data) {
-                musics = decodeResponse.results
-            }
+            let decodedResponse = try JSONDecoder().decode(MusicResponse.self, from: data)
+            musics = decodedResponse.results
         } catch {
-            print("Invalid data")
+            musics = []
+            print("Erro ao buscar músicas: \(error.localizedDescription)")
         }
         
         isLoading = false
@@ -86,7 +131,6 @@ struct MusicListView: View {
 }
 
 // MARK: - Preview
-
 #Preview {
     NavigationStack {
         MusicListView()
