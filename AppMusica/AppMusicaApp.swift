@@ -16,6 +16,6 @@ struct AppMusicaApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(appState)
-        }.modelContainer(for: [UserAccount.self], inMemory: false)
+        }.modelContainer(for: [UserAccount.self, Music.self], inMemory: false)
     }
 }

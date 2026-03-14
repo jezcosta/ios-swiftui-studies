@@ -5,15 +5,19 @@
 //  Created by Jessica Costa on 07/03/26.
 //
 
+import SwiftData
 import SwiftUI
 
 struct MusicListView: View {
     @EnvironmentObject private var appState: AppState
+    @Environment(\.modelContext) private var modelContext
     
     @State private var musics: [Music] = []
     @State private var isLoading = false
     @State private var searchText: String = ""
     @State private var hasSearched = false
+    
+    @Query var favorites: [Music]
     
     var body: some View {
         ZStack {
@@ -94,8 +98,9 @@ struct MusicListView: View {
                     Spacer()
                     
                     Button {
+                        addFavorite(item: item)
                     } label: {
-                        Image(systemName: "heart")
+                        Image(systemName: (getFavoriteIcon(item)))
                             .foregroundStyle(.red)
                     }
                     .buttonStyle(.plain)
@@ -103,6 +108,28 @@ struct MusicListView: View {
                 .padding(.vertical, 4)
             }
             .listStyle(.plain)
+        }
+    }
+    
+    func getFavoriteIcon(_ item: Music) -> String {
+        return verifyFavoriteInMemory(item) != nil ? "heart.fill" : "heart"
+    }
+    
+    func verifyFavoriteInMemory(_ item: Music) -> Music? {
+        favorites.first(where: { $0.trackId == item.trackId })
+    }
+    
+    func addFavorite(item: Music) {
+        if let existing = verifyFavoriteInMemory(item) {
+            modelContext.delete(existing)
+        } else {
+            modelContext.insert(item)
+        }
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("Erro ao salvar músicas no favoritos: \(error.localizedDescription)")
         }
     }
     
