@@ -16,17 +16,19 @@ final class Music: Codable, Identifiable {
     @Attribute(.unique) var trackId: Int
     var trackName: String
     var collectionName: String
+    var trackViewUrl: String
 
     var id: Int { trackId }
 
-    init(trackId: Int, trackName: String, collectionName: String) {
+    init(trackId: Int, trackName: String, collectionName: String, trackViewUrl: String) {
         self.trackId = trackId
         self.trackName = trackName
         self.collectionName = collectionName
+        self.trackViewUrl = trackViewUrl
     }
 
     enum CodingKeys: String, CodingKey {
-        case trackId, trackName, collectionName
+        case trackId, trackName, collectionName, trackViewUrl
     }
 
     required init(from decoder: Decoder) throws {
@@ -34,6 +36,7 @@ final class Music: Codable, Identifiable {
         self.trackId = try container.decode(Int.self, forKey: .trackId)
         self.trackName = try container.decode(String.self, forKey: .trackName)
         self.collectionName = try container.decodeIfPresent(String.self, forKey: .collectionName) ?? "Sem álbum"
+        self.trackViewUrl = try container.decode(String.self, forKey: .trackViewUrl)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -41,5 +44,6 @@ final class Music: Codable, Identifiable {
         try container.encode(trackId, forKey: .trackId)
         try container.encode(trackName, forKey: .trackName)
         try container.encode(collectionName, forKey: .collectionName)
+        try container.encode(trackViewUrl, forKey: .trackViewUrl)
     }
 }

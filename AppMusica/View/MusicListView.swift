@@ -81,34 +81,44 @@ struct MusicListView: View {
             )
         } else {
             List(musics, id: \.trackId) { item in
-                HStack {
-                    Image(systemName: "music.note")
-                        .font(.title3)
-                        .foregroundStyle(.blue)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(item.trackName)
-                            .font(.headline)
-                        
-                        Text(item.collectionName)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                if let url = URL(string: item.trackViewUrl) {
+                    Link(destination: url) {
+                        rowView(item)
                     }
-                    
-                    Spacer()
-                    
-                    Button {
-                        addFavorite(item: item)
-                    } label: {
-                        Image(systemName: (getFavoriteIcon(item)))
-                            .foregroundStyle(.red)
-                    }
-                    .buttonStyle(.plain)
+                } else {
+                    rowView(item)
                 }
-                .padding(.vertical, 4)
             }
             .listStyle(.plain)
         }
+    }
+    
+    func rowView(_ item: Music) -> some View {
+        HStack {
+            Image(systemName: "music.note")
+                .font(.title3)
+                .foregroundStyle(.blue)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.trackName)
+                    .font(.headline)
+
+                Text(item.collectionName)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Button {
+                addFavorite(item: item)
+            } label: {
+                Image(systemName: getFavoriteIcon(item))
+                    .foregroundStyle(.red)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, 4)
     }
     
     func getFavoriteIcon(_ item: Music) -> String {
