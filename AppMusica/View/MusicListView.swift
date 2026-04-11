@@ -5,8 +5,10 @@
 //  Created by Jessica Costa on 07/03/26.
 //
 
-import SwiftData
+import Combine
 import SwiftUI
+import SwiftData
+import AVFoundation
 
 struct MusicListView: View {
     @EnvironmentObject private var appState: AppState
@@ -16,8 +18,13 @@ struct MusicListView: View {
     @State private var isLoading = false
     @State private var searchText: String = ""
     @State private var hasSearched = false
+    @State private var showSheet = false
+    @State private var musicItem: Music?
+    @State private var currentPlayingMusic: Music?
     
     @Query var favorites: [Music]
+    
+    @StateObject var playerViewModel = PlayerViewModel()
     
     var body: some View {
         ZStack {
@@ -44,6 +51,12 @@ struct MusicListView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
+            NowPlayingBar(
+                music: music,
+                playerViewModel: playerViewModel,
+                onTap: { showSheet = true },
+                onClose: { currentPlayingMusic = nil }
+            )
             BottomSearchBar(searchText: $searchText)
                 .background(.clear)
         }
@@ -61,6 +74,11 @@ struct MusicListView: View {
                 try await Task.sleep(for: .milliseconds(500))
                 await loadData(query: trimmed)
             } catch {
+            }
+        }
+        .onChange(of: currentPlayingMusic) { oldValue, newValue in
+            if let music = newValue, oldValue?.trackId != newValue?.trackId {
+                playerViewModel.setupPlayer(url: music.previewUrl)
             }
         }
     }
@@ -81,66 +99,82 @@ struct MusicListView: View {
             )
         } else {
             List(musics, id: \.trackId) { item in
-                if let url = URL(string: item.trackViewUrl) {
-                    Link(destination: url) {
-                        rowView(item)
+                //Link(destination: URL(string: item.trackViewUrl)!) {
+                    HStack {
+                        AsyncImage(url: URL(string: item.artworkUrl30)) { image in
+                            image
+                        } placeholder: {
+                            Image(systemName: "music.note")
+                                .font(.title3)
+                                .foregroundStyle(.blue)
+                        }
+
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.trackName)
+                                .font(.headline)
+                            
+                            Text(item.collectionName)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .onTapGesture {
+                            musicItem = item
+                            currentPlayingMusic = item
+                            showSheet = true
+                        }
+                        
+                        Spacer()
+                        
+                        Button {
+                            addFavorito(item: item)
+                        } label: {
+                            Image(systemName: favoriteButtonImageName(item: item) )
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                        
                     }
-                } else {
-                    rowView(item)
-                }
+                    .padding(.vertical, 4)
+                //}
             }
             .listStyle(.plain)
+            .sheet(item: $musicItem) { item in
+                PlayerView(item: item, playerViewModel: playerViewModel)
+                .presentationDetents([.large])
+            }
         }
     }
     
-    func rowView(_ item: Music) -> some View {
-        HStack {
-            Image(systemName: "music.note")
-                .font(.title3)
-                .foregroundStyle(.blue)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item.trackName)
-                    .font(.headline)
-
-                Text(item.collectionName)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            Button {
-                addFavorite(item: item)
-            } label: {
-                Image(systemName: getFavoriteIcon(item))
-                    .foregroundStyle(.red)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.vertical, 4)
+    private func formatTime(_ seconds: Double) -> String {
+        let minutes = Int(seconds) / 60
+        let secs = Int(seconds) % 60
+        return String(format: "%d:%02d", minutes, secs)
     }
     
-    func getFavoriteIcon(_ item: Music) -> String {
-        return verifyFavoriteInMemory(item) != nil ? "heart.fill" : "heart"
-    }
-    
-    func verifyFavoriteInMemory(_ item: Music) -> Music? {
-        favorites.first(where: { $0.trackId == item.trackId })
-    }
-    
-    func addFavorite(item: Music) {
-        if let existing = verifyFavoriteInMemory(item) {
-            modelContext.delete(existing)
+    func addFavorito(item: Music) {
+        
+        if let favoriteMusic = isMusicFavorite(item: item) {
+            modelContext.delete(favoriteMusic)
         } else {
             modelContext.insert(item)
         }
-        
+
         do {
             try modelContext.save()
+
+            // garantir que botao fique selecionado
         } catch {
-            print("Erro ao salvar músicas no favoritos: \(error.localizedDescription)")
+            // garantir que botao fique nao selecionado
         }
+    }
+    
+    func isMusicFavorite(item: Music) -> Music? {
+        favorites.first(where: { music in music.trackId == item.trackId })
+    }
+    
+    func favoriteButtonImageName(item: Music) -> String {
+        isMusicFavorite(item: item) != nil ? "heart.fill" : "heart"
     }
     
     func loadData(query: String) async {

@@ -12,31 +12,50 @@ struct MusicResponse: Codable {
 }
 
 @Model
-final class Music: Codable, Identifiable {
-    @Attribute(.unique) var trackId: Int
+final class Music: Identifiable, Codable {
+    // SwiftData persisted properties must be var
+    var trackId: Int
     var trackName: String
     var collectionName: String
     var trackViewUrl: String
+    var previewUrl: String
+    var artworkUrl30: String
+    var artworkUrl100: String
 
+    // Identifiable conformance using trackId
     var id: Int { trackId }
 
-    init(trackId: Int, trackName: String, collectionName: String, trackViewUrl: String) {
+    // Designated initializer for SwiftData and manual init
+    init(trackId: Int, trackName: String, collectionName: String, trackViewUrl: String,previewUrl: String, artworkUrl30: String, artworkUrl100: String) {
         self.trackId = trackId
         self.trackName = trackName
         self.collectionName = collectionName
         self.trackViewUrl = trackViewUrl
+        self.previewUrl = previewUrl
+        self.artworkUrl30 = artworkUrl30
+        self.artworkUrl100 = artworkUrl100
     }
 
-    enum CodingKeys: String, CodingKey {
-        case trackId, trackName, collectionName, trackViewUrl
+    // MARK: - Codable
+    private enum CodingKeys: String, CodingKey {
+        case trackId
+        case trackName
+        case collectionName
+        case trackViewUrl
+        case previewUrl
+        case artworkUrl30
+        case artworkUrl100
     }
 
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.trackId = try container.decode(Int.self, forKey: .trackId)
         self.trackName = try container.decode(String.self, forKey: .trackName)
-        self.collectionName = try container.decodeIfPresent(String.self, forKey: .collectionName) ?? "Sem álbum"
+        self.collectionName = try container.decode(String.self, forKey: .collectionName)
         self.trackViewUrl = try container.decode(String.self, forKey: .trackViewUrl)
+        self.previewUrl = try container.decodeIfPresent(String.self, forKey: .previewUrl) ?? ""
+        self.artworkUrl30 = try container.decodeIfPresent(String.self, forKey: .artworkUrl30) ?? ""
+        self.artworkUrl100 = try container.decodeIfPresent(String.self, forKey: .artworkUrl100) ?? ""
     }
 
     func encode(to encoder: Encoder) throws {
@@ -45,5 +64,8 @@ final class Music: Codable, Identifiable {
         try container.encode(trackName, forKey: .trackName)
         try container.encode(collectionName, forKey: .collectionName)
         try container.encode(trackViewUrl, forKey: .trackViewUrl)
+        try container.encode(previewUrl, forKey: .previewUrl)
+        try container.encode(artworkUrl30, forKey: .artworkUrl30)
+        try container.encode(artworkUrl100, forKey: .artworkUrl100)
     }
 }
