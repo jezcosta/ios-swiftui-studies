@@ -11,6 +11,7 @@ import SwiftUI
 struct PlayerView: View {
     var item: Music
     @ObservedObject var playerViewModel: PlayerViewModel
+    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         ZStack {
@@ -26,6 +27,16 @@ struct PlayerView: View {
             .ignoresSafeArea()
             
             VStack(spacing: 24) {
+                HStack {
+                    Spacer()
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                    .padding(.trailing, 20)
+                }
+                
                 Spacer(minLength: 20)
                 
                 AsyncImage(url: URL(string: item.artworkUrl100)) { image in

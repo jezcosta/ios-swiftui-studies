@@ -51,14 +51,20 @@ struct MusicListView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            NowPlayingBar(
-                music: music,
-                playerViewModel: playerViewModel,
-                onTap: { showSheet = true },
-                onClose: { currentPlayingMusic = nil }
-            )
-            BottomSearchBar(searchText: $searchText)
-                .background(.clear)
+            if let music = currentPlayingMusic {
+                NowPlayingBar(
+                    music: music,
+                    playerViewModel: playerViewModel,
+                    onTap: { musicItem = currentPlayingMusic },
+                    onClose: { 
+                        playerViewModel.pause()
+                        currentPlayingMusic = nil 
+                    }
+                )
+            } else {
+                BottomSearchBar(searchText: $searchText)
+                    .background(.clear)
+            }
         }
         .task(id: searchText) {
             let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -127,7 +133,7 @@ struct MusicListView: View {
                         Spacer()
                         
                         Button {
-                            addFavorito(item: item)
+                            addFavorite(item: item)
                         } label: {
                             Image(systemName: favoriteButtonImageName(item: item) )
                                 .foregroundStyle(.red)
@@ -146,14 +152,7 @@ struct MusicListView: View {
         }
     }
     
-    private func formatTime(_ seconds: Double) -> String {
-        let minutes = Int(seconds) / 60
-        let secs = Int(seconds) % 60
-        return String(format: "%d:%02d", minutes, secs)
-    }
-    
-    func addFavorito(item: Music) {
-        
+    private func addFavorite(item: Music) {
         if let favoriteMusic = isMusicFavorite(item: item) {
             modelContext.delete(favoriteMusic)
         } else {
@@ -162,10 +161,8 @@ struct MusicListView: View {
 
         do {
             try modelContext.save()
-
-            // garantir que botao fique selecionado
         } catch {
-            // garantir que botao fique nao selecionado
+            print("Erro ao salvar favorito: \(error.localizedDescription)")
         }
     }
     
