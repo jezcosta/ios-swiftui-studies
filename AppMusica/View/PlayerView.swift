@@ -71,10 +71,18 @@ struct PlayerView: View {
                 .padding(.horizontal)
                 
                 VStack(spacing: 8) {
-                    ProgressView(value: playerViewModel.currentTime, total: playerViewModel.duration)
-                        .progressViewStyle(LinearProgressViewStyle(tint: .white))
-                        .frame(height: 4)
-                        .padding(.horizontal)
+                    CustomSlider(
+                        value: Binding(
+                            get: { playerViewModel.currentTime },
+                            set: { playerViewModel.updateSliderTime($0) }
+                        ),
+                        range: 0...(playerViewModel.duration > 0 ? playerViewModel.duration : 1),
+                        onEditingChanged: { playerViewModel.setSliderEditing($0) },
+                        trackColor: .white.opacity(0.25),
+                        progressColor: .white,
+                        thumbColor: .white
+                    )
+                    .padding(.horizontal)
                     
                     HStack {
                         Text(playerViewModel.formatTime(playerViewModel.currentTime))

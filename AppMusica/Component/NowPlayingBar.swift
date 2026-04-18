@@ -75,9 +75,20 @@ struct NowPlayingBar: View {
                 }
                 
                 VStack(spacing: 4) {
-                    ProgressView(value: playerViewModel.currentTime, total: playerViewModel.duration)
-                        .progressViewStyle(LinearProgressViewStyle(tint: .blue))
-                        .frame(height: 3)
+                    CustomSlider(
+                        value: Binding(
+                            get: { playerViewModel.currentTime },
+                            set: { playerViewModel.updateSliderTime($0) }
+                        ),
+                        range: 0...(playerViewModel.duration > 0 ? playerViewModel.duration : 1),
+                        onEditingChanged: { playerViewModel.setSliderEditing($0) },
+                        trackColor: Color.blue.opacity(0.15),
+                        progressColor: Color.blue,
+                        thumbColor: Color.blue,
+                        trackHeight: 4,
+                        thumbSize: 12
+                    )
+                    .tint(.blue)
                     
                     HStack {
                         Text(playerViewModel.formatTime(playerViewModel.currentTime))
