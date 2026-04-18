@@ -16,6 +16,7 @@ struct AppMusicaApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(appState)
+                .preferredColorScheme(.light)
         }.modelContainer(for: [UserAccount.self, Music.self], inMemory: false)
     }
 }
